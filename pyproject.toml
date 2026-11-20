@@ -1,0 +1,18 @@
+[project]
+name = "peeweare-showtime-notifier-temporal"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.162.5",
+    "httpx>=0.28.1",
+    "mcp[cli]>=2.3.0",
+    "pydantic>=2.14.3",
+    "pymongo>=4.20.0",
+    "temporalio>=1.36.0",
+    "tzdata>=2026.6",
+]
+
+[tool.fastapi]
+entrypoint = "backend.main:app"

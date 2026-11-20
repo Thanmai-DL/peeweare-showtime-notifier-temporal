@@ -1,0 +1,53 @@
+name: peeweare-showtime-notifier
+services:
+    peeweare-showtime-notifier:
+        container_name: peeweare-showtime-notifier
+        image: ghcr.io/thanmai-dl/peeweare-showtime-notifier-temporal:main
+        restart: unless-stopped
+        environment:
+            - MONGODB_HOST=${MONGODB_HOST}
+            - MONGODB_INITDB_ROOT_USERNAME=${MONGODB_INITDB_ROOT_USERNAME}
+            - MONGODB_INITDB_ROOT_PASSWORD=${MONGODB_INITDB_ROOT_PASSWORD}
+            - NTFY_URL=${NTFY_URL}
+            - NTFY_TOKEN=${NTFY_TOKEN}
+            - URL=${URL}
+            - HEADERS=${HEADERS}
+            - PSN_API_BASE=${PSN_API_BASE}
+            - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+            - TEMPORAL_NAMESPACE=${TEMPORAL_NAMESPACE}
+            - TEMPORAL_ADDRESS=${TEMPORAL_ADDRESS}
+        networks:
+            - default
+            - shared
+        ports:
+            - "8000:80"
+        depends_on:
+            - mongodb
+    mongodb:
+        container_name: mongodb
+        image: mongodb/mongodb-community-server:8.0-ubi8-slim
+        restart: unless-stopped
+        environment:
+            - MONGODB_INITDB_ROOT_USERNAME=${MONGODB_INITDB_ROOT_USERNAME}
+            - MONGODB_INITDB_ROOT_PASSWORD=${MONGODB_INITDB_ROOT_PASSWORD}
+        networks:
+            - default
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongodb_data:/data/db
+            - mongodb_config:/data/configdb
+
+volumes:
+    mongodb_data:
+        name: mongodb_data
+    mongodb_config:
+        name: mongodb_config
+
+networks:
+    default:
+        driver: bridge
+        name: peeweare-showtime-notifier
+    shared:
+        external: true
+        name: temporal-network
