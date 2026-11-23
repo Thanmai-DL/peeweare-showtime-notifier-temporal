@@ -12,10 +12,11 @@ with workflow.unsafe.imports_passed_through():
 class StartMonitoringWorkflow:
     @workflow.run
     async def run(self, input: MonitoringInputWithId) -> dict | str:
+        timestamp = int(input.release_date.timestamp())
         showtimes = await workflow.execute_activity_method(
             PeeweareActivity.get_movie_showtimes,
             input,
-            activity_id=f"get-movie-showtimes-{input.movie_id}-{input.theater_id}",
+            activity_id=f"get-movie-showtimes-{input.movie_id}-{input.theater_id}-{timestamp}",
             task_queue="peeweare-showtime-notifier-task-queue",
             start_to_close_timeout=timedelta(seconds=10),
             retry_policy=RetryPolicy(maximum_attempts=2),
@@ -25,7 +26,7 @@ class StartMonitoringWorkflow:
             document = await workflow.execute_activity_method(
                 DBActivity.get_from_db,
                 input.document_id,
-                activity_id=f"get-monitoring-document-{input.movie_id}-{input.theater_id}",
+                activity_id=f"get-monitoring-document-{input.document_id}",
                 task_queue="peeweare-showtime-notifier-task-queue",
                 start_to_close_timeout=timedelta(seconds=5),
                 retry_policy=RetryPolicy(maximum_attempts=2),
@@ -53,7 +54,7 @@ class StartMonitoringWorkflow:
                 await workflow.execute_activity_method(
                     NotifyActivity.push_notification,
                     payload,
-                    activity_id=f"update-monitoring-document-{input.movie_id}-{input.theater_id}",
+                    activity_id=f"push-notification-{input.movie_id}-{input.theater_id}-{timestamp}",
                     task_queue="peeweare-showtime-notifier-task-queue",
                     start_to_close_timeout=timedelta(seconds=5),
                     retry_policy=RetryPolicy(maximum_attempts=2),
@@ -62,7 +63,7 @@ class StartMonitoringWorkflow:
                 await workflow.execute_activity_method(
                     DBActivity.update_in_db,
                     document,
-                    activity_id=f"update-monitoring-document-{input.movie_id}-{input.theater_id}",
+                    activity_id=f"update-monitoring-document-{input.document_id}",
                     task_queue="peeweare-showtime-notifier-task-queue",
                     start_to_close_timeout=timedelta(seconds=5),
                     retry_policy=RetryPolicy(maximum_attempts=2),

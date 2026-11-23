@@ -39,12 +39,12 @@ async def start_monitoring_schedule(
         MonitoringRequest: The details of the monitoring request, including the schedule ID.
     """
     temporal_client = request.app.state.temporal_client
-
+    timestamp = int(body.release_date.timestamp())
     # Save MonitoringRequest to DB
     document_id = await temporal_client.execute_activity(
         DBActivity.save_to_db,
         args=[body],
-        id=f"db-save-{body.movie_id}-{body.theater_id}",
+        id=f"db-save-{body.movie_id}-{body.theater_id}-{timestamp}",
         task_queue="peeweare-showtime-notifier-task-queue",
         schedule_to_close_timeout=timedelta(seconds=5),
         retry_policy=RetryPolicy(maximum_attempts=2),
@@ -60,7 +60,7 @@ async def start_monitoring_schedule(
             action=ScheduleActionStartWorkflow(
                 StartMonitoringWorkflow.run,
                 body,
-                id=f"start-monitoring-workflow-{body.movie_id}-{body.theater_id}",
+                id=f"start-monitoring-workflow-{body.movie_id}-{body.theater_id}-{timestamp}",
                 task_queue="peeweare-showtime-notifier-task-queue",
             ),
             spec=ScheduleSpec(
@@ -98,7 +98,7 @@ async def delete_monitoring_schedule(
     document = await temporal_client.execute_activity(
         DBActivity.get_from_db,
         args=[document_id],
-        id=f"delete-monitoring-document-{document_id}",
+        id=f"get-monitoring-document-{document_id}",
         task_queue="peeweare-showtime-notifier-task-queue",
         schedule_to_close_timeout=timedelta(seconds=5),
         retry_policy=RetryPolicy(maximum_attempts=2),
@@ -115,7 +115,7 @@ async def delete_monitoring_schedule(
         await temporal_client.execute_activity(
             DBActivity.delete_from_db,
             args=[document_id],
-            id=f"db-delete-{document['movie_id']}-{document['theater_id']}",
+            id=f"db-delete-{document['movie_id']}-{document['theater_id']}-{document_id}",
             task_queue="peeweare-showtime-notifier-task-queue",
             schedule_to_close_timeout=timedelta(seconds=5),
             retry_policy=RetryPolicy(maximum_attempts=2),

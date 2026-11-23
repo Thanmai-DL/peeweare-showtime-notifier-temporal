@@ -38,9 +38,7 @@ class MonitoringRequest(BaseModel):
             self.expiry_date = self.release_date + timedelta(days=1)
 
         if self.schedule_id is None:
-            self.schedule_id = (
-                f"start-monitoring-schedule-{self.movie_id}-{self.theater_id}"
-            )
+            self.schedule_id = f"start-monitoring-schedule-{self.movie_id}-{self.theater_id}-{int(self.release_date.timestamp())}"
 
         return self
 
